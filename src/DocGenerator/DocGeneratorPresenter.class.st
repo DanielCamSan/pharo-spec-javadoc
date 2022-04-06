@@ -2,34 +2,53 @@ Class {
 	#name : #DocGeneratorPresenter,
 	#superclass : #SpPresenter,
 	#instVars : [
-		'docGeneratorPresenter'
+		'docGeneratorPresenter',
+		'packagesList',
+		'classesList',
+		'methodsList',
+		'codeSpace'
 	],
 	#category : #DocGenerator
 }
 
 { #category : #initialization }
+DocGeneratorPresenter >> initialize [
+	super initialize.
+	
+]
+
+{ #category : #initialization }
 DocGeneratorPresenter >> initializePresenters [
 
-	docGeneratorPresenter := self newTable
-		                         addColumn:
-			                         (SpStringTableColumn
-				                          title: 'Title'
-				                          evaluated: [ :task | task ]);
-		                         yourself;
-		                         addColumn:
-			                         (SpStringTableColumn
-				                          title: 'Classes'
-				                          evaluated: [ :task | task ]);
-		                         yourself;
-		                         addColumn:
-			                         (SpStringTableColumn
-				                          title: 'Methods'
-				                          evaluated: [ :task | task ]);
-		                         yourself.
+	packagesList := self newList.
+	classesList := self newList.
+	methodsList := self newList.
+	codeSpace := self newCode.
+	packagesList display: [ :package | package name ].
+	classesList display: [ :class | class name ].
+	methodsList display: [ :method | method selector ].
 
-	self layout: (SpBoxLayout newVertical
-			 add: docGeneratorPresenter;
-			 yourself)
+
+	self layout: (SpBoxLayout newTopToBottom
+			 add: (SpBoxLayout newLeftToRight
+					  spacing: 5;
+					  add: packagesList;
+					  add: classesList;
+					  add: methodsList;
+					  yourself);
+			 spacing: 5;
+			 add: codeSpace;
+			 yourself).
+
+
+	packagesList transmitDo: [ :package | 
+		package ifNotNil: [ 
+			classesList items: package classes asOrderedCollection ] ].
+	classesList transmitDo: [ :class | 
+		class ifNotNil: [ 
+			methodsList items: class allMethods asOrderedCollection ] ].
+	methodsList transmitDo: [ :method | 
+		method ifNotNil: [ codeSpace text: method sourceCode ] ]
 ]
 
 { #category : #initialization }
@@ -41,5 +60,5 @@ DocGeneratorPresenter >> initializeWindow:  aWindowPresenter [
 
 { #category : #initialization }
 DocGeneratorPresenter >> updatePresenter [ 
-	docGeneratorPresenter  items: RPackage organizer packages
+	packagesList items: RPackage organizer packages
 ]
